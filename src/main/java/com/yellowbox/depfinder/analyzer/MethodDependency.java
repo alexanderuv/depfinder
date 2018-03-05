@@ -1,34 +1,29 @@
 package com.yellowbox.depfinder.analyzer;
 
-public class MethodDependency {
-
-    private String className;
+public class MethodDependency
+{
+    private String          className;
     private MethodSignature methodSignature;
 
-    public MethodDependency(String className, MethodSignature methodSignature) {
-        this.className = className;
+    public MethodDependency(String className, MethodSignature methodSignature)
+    {
+        this.className = className.replace('/', '.');
         this.methodSignature = methodSignature;
     }
 
-    public String getClassName() {
-        return className;
-    }
-
-    public MethodSignature getMethodSignature() {
+    public MethodSignature getMethodSignature()
+    {
         return methodSignature;
     }
 
-    @Override
-    public String toString() {
-        if(methodSignature.getMethodName().equals("<init>")) {
-            return String.format("[%s] %s(%s)", className.replace('/', '.'),
-                    methodSignature.getMethodName(),
-                    methodSignature.getFormattedParameterList());
-        }
+    public String getClassName()
+    {
+        return className;
+    }
 
-        return String.format("[%s] %s %s(%s)", className.replace('/', '.'),
-                methodSignature.getType(),
-                methodSignature.getMethodName(),
-                methodSignature.getFormattedParameterList());
+    @Override
+    public String toString()
+    {
+        return String.format("[%s] %s", className, methodSignature.toString());
     }
 }

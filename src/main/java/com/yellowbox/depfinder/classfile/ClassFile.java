@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-public class ClassFile {
+public class ClassFile
+{
 
     static int JAVA_MAGIC_NUMBER = 0xCAFEBABE;
 
@@ -24,7 +25,8 @@ public class ClassFile {
     private MethodInfo[] methods;
     private Attributes   attributes;
 
-    public ClassFile() {
+    public ClassFile()
+    {
         magic = JAVA_MAGIC_NUMBER;
         minor_version = 0;
         major_version = 52;
@@ -32,45 +34,53 @@ public class ClassFile {
         access_flags = new AccessFlags();
     }
 
-    public ClassFile(InputStream input) throws IOException {
-        ClassReader reader = new ClassReader(this, input);
+    public ClassFile(InputStream input) throws IOException
+    {
+        try {
+            ClassReader reader = new ClassReader(this, input);
 
-        magic = reader.readInt();
-        if (magic != ClassFile.JAVA_MAGIC_NUMBER)
-            throw new RuntimeException("Unable to find magic number in class file");
+            magic = reader.readInt();
+            if (magic != ClassFile.JAVA_MAGIC_NUMBER) {
+                throw new RuntimeException("Unable to find magic number in class file");
+            }
 
-        minor_version = reader.readUnsignedShort();
-        major_version = reader.readUnsignedShort();
+            minor_version = reader.readUnsignedShort();
+            major_version = reader.readUnsignedShort();
 
-        constant_pool = new ConstantPool(reader);
-        access_flags = new AccessFlags(reader);
-        this_class = reader.readUnsignedShort();
-        super_class = reader.readUnsignedShort();
+            constant_pool = new ConstantPool(reader);
+            access_flags = new AccessFlags(reader);
+            this_class = reader.readUnsignedShort();
+            super_class = reader.readUnsignedShort();
 
-        interfaces_count = reader.readUnsignedShort();
-        interfaces = new int[interfaces_count];
-        for (int i = 0; i < interfaces_count; i++) {
-            interfaces[i] = reader.readUnsignedShort();
+            interfaces_count = reader.readUnsignedShort();
+            interfaces = new int[interfaces_count];
+            for (int i = 0; i < interfaces_count; i++) {
+                interfaces[i] = reader.readUnsignedShort();
+            }
+
+            fields_count = reader.readUnsignedShort();
+            fields = new FieldInfo[fields_count];
+            for (int i = 0; i < fields_count; i++) {
+                fields[i] = new FieldInfo(reader);
+            }
+
+            method_count = reader.readUnsignedShort();
+            methods = new MethodInfo[method_count];
+            for (int i = 0; i < method_count; i++) {
+                methods[i] = new MethodInfo(reader);
+            }
+
+           // attributes = new Attributes(reader);
+
+            //reader.checkEOF();
+        } catch (Exception e) {
+            toHumanReadable(System.err);
+            throw e;
         }
-
-        fields_count = reader.readUnsignedShort();
-        fields = new FieldInfo[fields_count];
-        for (int i = 0; i < fields_count; i++) {
-            fields[i] = new FieldInfo(reader);
-        }
-
-        method_count = reader.readUnsignedShort();
-        methods = new MethodInfo[method_count];
-        for (int i = 0; i < method_count; i++) {
-            methods[i] = new MethodInfo(reader);
-        }
-
-        attributes = new Attributes(reader);
-
-        reader.checkEOF();
     }
 
-    public void toHumanReadable(PrintStream out) {
+    public void toHumanReadable(PrintStream out)
+    {
         out.println("Magic Number OK: 0x" + Integer.toHexString(JAVA_MAGIC_NUMBER).toUpperCase());
 
         out.println("Minor Version: " + minor_version);
@@ -82,7 +92,11 @@ public class ClassFile {
             out.print("[" + count + "]");
             count++;
 
-            constant.toHumanReadable(out);
+            if (constant != null) {
+                constant.toHumanReadable(out);
+            } else {
+                out.println(" -> NULL");
+            }
         }
 
         out.println("Access Flags: " + access_flags.toString());
@@ -113,17 +127,26 @@ public class ClassFile {
         attributes.toHumanReadable(out);
     }
 
-    public static ClassFile read(String path) throws IOException {
+    public static ClassFile read(String path) throws IOException
+    {
         try (FileInputStream fin = new FileInputStream(path)) {
             return new ClassFile(fin);
         }
     }
 
-    public static ClassFile read(InputStream stream) throws IOException {
+    public static ClassFile read(InputStream stream) throws IOException
+    {
         return new ClassFile(stream);
     }
 
-    public ConstantPool getConstantPool() {
+    public String getClassName()
+    {
+        ConstantPool.CONSTANT_Class_info thisClass = getConstantPool().getClassInfo(this_class);
+        return thisClass.getName().replace("/", ".");
+    }
+
+    public ConstantPool getConstantPool()
+    {
         return constant_pool;
     }
 }

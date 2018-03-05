@@ -7,25 +7,30 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-public class MethodSignatureParser {
+public class MethodSignatureParser
+{
 
     private MethodSignature methodSignature;
     private int argCounter = 0;
 
-    public MethodSignatureParser(String name, String signature) {
+    public MethodSignatureParser(String name, String signature)
+    {
         methodSignature = new MethodSignature();
         methodSignature.setMethodName(name);
         parse(signature);
     }
 
-    public MethodSignatureParser(ConstantPool.CONSTANT_NameAndType_info nameAndType) {
+    public MethodSignatureParser(ConstantPool.CONSTANT_NameAndType_info nameAndType)
+    {
         methodSignature = new MethodSignature();
         methodSignature.setMethodName(nameAndType.getName());
         parse(nameAndType.getSignature());
     }
 
-    private void parse(String signature) {
+    private void parse(String signature)
+    {
 
         try (StringReader reader = new StringReader(signature)) {
             if (reader.read() != '(') {
@@ -44,11 +49,12 @@ public class MethodSignatureParser {
         }
     }
 
-    private List<ParameterDefinition> readParameters(StringReader reader) throws IOException {
+    private List<ParameterDefinition> readParameters(StringReader reader) throws IOException
+    {
         List<ParameterDefinition> parameters = new ArrayList<>();
 
         int type = reader.read();
-        while(type != ')') {
+        while (type != ')') {
             String actualType = parseType(reader, type);
             type = reader.read();
             parameters.add(new ParameterDefinition(actualType, "arg" + (argCounter++)));
@@ -57,7 +63,8 @@ public class MethodSignatureParser {
         return parameters;
     }
 
-    private String parseType(StringReader reader, int type) throws IOException {
+    private String parseType(StringReader reader, int type) throws IOException
+    {
         String actualType = mapTypeToReadableType(type);
 
         if (actualType.equals("#")) {
@@ -71,23 +78,45 @@ public class MethodSignatureParser {
 
             actualType = actualTypeBuilder.toString();
             actualType = actualType.substring(0, actualType.length() - 1);
+        } else if (Objects.equals(actualType, "[]")) {
+            return parseType(reader, reader.read()) + "[]";
         }
 
         return actualType.replace("/", ".");
     }
 
-    private String mapTypeToReadableType(int type) {
+    private String mapTypeToReadableType(int type)
+    {
         switch (type) {
             case 'V':
                 return "void";
             case 'L':
                 return "#";
+            case 'B':
+                return "byte";
+            case 'C':
+                return "char";
+            case 'D':
+                return "double";
+            case 'F':
+                return "float";
+            case 'I':
+                return "int";
+            case 'J':
+                return "long";
+            case 'S':
+                return "short";
+            case 'Z':
+                return "boolean";
+            case '[':
+                return "[]";
         }
 
         return "UNDEFINED";
     }
 
-    public MethodSignature getMethodSignature() {
+    public MethodSignature getMethodSignature()
+    {
         return methodSignature;
     }
 }

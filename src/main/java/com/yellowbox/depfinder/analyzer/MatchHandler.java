@@ -1,5 +1,7 @@
 package com.yellowbox.depfinder.analyzer;
 
-public class MatchHandler
+@FunctionalInterface
+public interface MatchHandler
 {
+    void handle(DependencyMatch match);
 }
